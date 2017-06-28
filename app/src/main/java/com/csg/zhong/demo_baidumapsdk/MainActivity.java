@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private MyOrientationListener mOrientationListener = null;
     private float mCurrentX;
 
+    private MyLocationConfiguration.LocationMode mLocationMode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +65,9 @@ public class MainActivity extends AppCompatActivity {
 
         mBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_location);
 
-        MyLocationConfiguration config = new MyLocationConfiguration(MyLocationConfiguration.LocationMode.NORMAL, true, mBitmapDescriptor);
+        mLocationMode = MyLocationConfiguration.LocationMode.NORMAL;
+
+        MyLocationConfiguration config = new MyLocationConfiguration(mLocationMode, true, mBitmapDescriptor);
         mBaiduMap.setMyLocationConfiguration(config);
 
         mOrientationListener = new MyOrientationListener(this);
@@ -174,6 +178,26 @@ public class MainActivity extends AppCompatActivity {
         LatLng mLatLng = new LatLng(mlatitude, mlongitude);
         MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(mLatLng);
         mBaiduMap.setMapStatus(msu);
+    }
+
+    public void mode(View view) {
+        Button btn = (Button) view;
+        if (TextUtils.equals("普通模式", btn.getText().toString())) {
+            mLocationMode = MyLocationConfiguration.LocationMode.COMPASS;
+            MyLocationConfiguration config = new MyLocationConfiguration(mLocationMode, true, mBitmapDescriptor);
+            mBaiduMap.setMyLocationConfiguration(config);
+            btn.setText("罗盘模式");
+        } else if (TextUtils.equals("罗盘模式", btn.getText().toString())) {
+            mLocationMode = MyLocationConfiguration.LocationMode.FOLLOWING;
+            MyLocationConfiguration config = new MyLocationConfiguration(mLocationMode, true, mBitmapDescriptor);
+            mBaiduMap.setMyLocationConfiguration(config);
+            btn.setText("跟随模式");
+        } else {
+            mLocationMode = MyLocationConfiguration.LocationMode.NORMAL;
+            MyLocationConfiguration config = new MyLocationConfiguration(mLocationMode, true, mBitmapDescriptor);
+            mBaiduMap.setMyLocationConfiguration(config);
+            btn.setText("普通模式");
+        }
     }
 
     private class MyLocationListener implements BDLocationListener {
