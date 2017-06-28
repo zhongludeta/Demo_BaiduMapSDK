@@ -12,9 +12,12 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
 import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.BitmapDescriptor;
+import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MyLocationConfiguration;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 
@@ -30,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
     private double mlatitude = 0.0d;
     private double mlongitude = 0.0d;
+    private float mRadius;
+
+    private BitmapDescriptor mBitmapDescriptor = null;
+    private MyOrientationListener mOrientationListener = null;
+    private float mCurrentX;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,10 +56,31 @@ public class MainActivity extends AppCompatActivity {
         option.setCoorType("bd09ll");
         option.setIsNeedAddress(true);
         option.setOpenGps(true);
-        option.setScanSpan(4000);
+        option.setScanSpan(500);
         mLocationClient.setLocOption(option);
 
         mLocationClient.registerLocationListener(mLocationListener);
+
+        mBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.mipmap.icon_location);
+
+        MyLocationConfiguration config = new MyLocationConfiguration(MyLocationConfiguration.LocationMode.NORMAL, true, mBitmapDescriptor);
+        mBaiduMap.setMyLocationConfiguration(config);
+
+        mOrientationListener = new MyOrientationListener(this);
+        mOrientationListener.setOnOrientationChangedListener(new MyOrientationListener.OnOrientationChangedListener() {
+            @Override
+            public void onOrientationChanged(float x) {
+                mCurrentX = x;
+                MyLocationData data = new MyLocationData.Builder()//
+                        .direction(mCurrentX)//
+                        .accuracy(mRadius)//
+                        .latitude(mlatitude)//
+                        .longitude(mlongitude)//
+                        .build();
+                mBaiduMap.setMyLocationData(data);
+            }
+        });
+
     }
 
     private void init() {
@@ -83,6 +112,7 @@ public class MainActivity extends AppCompatActivity {
         if (!mLocationClient.isStarted()) {
             mLocationClient.start();
         }
+        mOrientationListener.start();
     }
 
     @Override
@@ -92,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         if (mLocationClient.isStarted()) {
             mLocationClient.stop();
         }
+        mOrientationListener.stop();
     }
 
     @Override
@@ -149,18 +180,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceiveLocation(BDLocation bdLocation) {
-            float radius = bdLocation.getRadius();
+            mRadius = bdLocation.getRadius();
             mlatitude = bdLocation.getLatitude();
             mlongitude = bdLocation.getLongitude();
             MyLocationData data = new MyLocationData.Builder()//
-                    .accuracy(radius)//
+                    .direction(mCurrentX)//
+                    .accuracy(mRadius)//
                     .latitude(mlatitude)//
                     .longitude(mlongitude)//
                     .build();
-
             mBaiduMap.setMyLocationData(data);
             //            Toast.makeText(MainActivity.this, bdLocation.getAddrStr(), Toast.LENGTH_LONG).show();
-
             if (isFirstIn) {
                 LatLng latLng = new LatLng(mlatitude, mlongitude);
                 MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(latLng);
