@@ -5,7 +5,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
@@ -28,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
     private MyLocationListener mLocationListener = null;
 
     private boolean isFirstIn = true;
+
+    private double mlatitude = 0.0d;
+    private double mlongitude = 0.0d;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,24 +139,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void location(View view) {
+        LatLng mLatLng = new LatLng(mlatitude, mlongitude);
+        MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(mLatLng);
+        mBaiduMap.setMapStatus(msu);
+    }
+
     private class MyLocationListener implements BDLocationListener {
 
         @Override
         public void onReceiveLocation(BDLocation bdLocation) {
             float radius = bdLocation.getRadius();
-            double latitude = bdLocation.getLatitude();
-            double longitude = bdLocation.getLongitude();
+            mlatitude = bdLocation.getLatitude();
+            mlongitude = bdLocation.getLongitude();
             MyLocationData data = new MyLocationData.Builder()//
                     .accuracy(radius)//
-                    .latitude(latitude)//
-                    .longitude(longitude)//
+                    .latitude(mlatitude)//
+                    .longitude(mlongitude)//
                     .build();
 
             mBaiduMap.setMyLocationData(data);
-            Toast.makeText(MainActivity.this, bdLocation.getAddrStr(), Toast.LENGTH_LONG).show();
+            //            Toast.makeText(MainActivity.this, bdLocation.getAddrStr(), Toast.LENGTH_LONG).show();
 
             if (isFirstIn) {
-                LatLng latLng = new LatLng(latitude, longitude);
+                LatLng latLng = new LatLng(mlatitude, mlongitude);
                 MapStatusUpdate msu = MapStatusUpdateFactory.newLatLng(latLng);
                 mBaiduMap.animateMapStatus(msu);
                 isFirstIn = false;
